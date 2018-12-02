@@ -33,9 +33,9 @@
 	<h1>Fresh Splash Dashboard</h1>
 	<p>Add a wallpaper to this Fresh Splash server by just clicking on the button below.</p>
 	<div class="upload-btn-wrapper">
-		<form action="upload.php">
+		<form method="post" action="upload.php" enctype="multipart/form-data">
 			<button class="btn">Upload a file</button>
-			<input type="file" name="myfile" onchange="this.form.submit()">
+			<input type="file" name="image" onchange="this.form.submit()">
 		</form>
 	</div>
 </body>
