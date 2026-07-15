@@ -1,0 +1,9 @@
+[Unit]
+Description=Download a FreshSplash wallpaper
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-%h/.config/freshsplash/client.env
+ExecStart=%h/.local/bin/freshsplash

@@ -1,0 +1,8 @@
+<?php
+
+return [
+    'name' => 'The Wallpaper Club',
+    'base_url' => 'https://wallpapers.example.com',
+    'upload_token' => 'replace-with-a-long-random-token',
+    'admin_token' => 'replace-with-a-different-long-random-token',
+];

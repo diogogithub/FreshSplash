@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh the FreshSplash wallpaper periodically
+
+[Timer]
+OnBootSec=2m
+OnUnitActiveSec=6h
+RandomizedDelaySec=15m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

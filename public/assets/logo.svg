@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">FreshSplash</title>
+  <desc id="desc">A playful splash surrounding a small landscape.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#20c7b5"/>
+      <stop offset="1" stop-color="#2d68f0"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#g)" d="M132 14c15 22 17 37 6 46 25-12 42-11 51 4 7 13 2 27-16 43 28-3 45 4 49 21 4 18-9 31-39 39 19 20 22 38 9 51-14 14-32 10-53-10-8 27-21 40-39 36-18-4-25-20-22-48-25 15-43 15-54 0-11-15-4-31 20-47-27-7-40-20-36-38 4-18 21-25 50-21-15-24-15-42 0-53 14-10 31-4 49 18 1-28 10-44 27-47Z"/>
+  <rect x="58" y="70" width="140" height="112" rx="24" fill="#fff" opacity=".96"/>
+  <circle cx="157" cy="103" r="15" fill="#ffcf4f"/>
+  <path d="m76 157 35-41 24 28 18-20 30 33H76Z" fill="#19a890"/>
+  <path d="m76 157 35-41 24 28 18-20 30 33" fill="none" stroke="#0e6e87" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
