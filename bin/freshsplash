@@ -45,7 +45,7 @@ mkdir -p "$dir"
 tmp=$(mktemp "$dir/.freshsplash.XXXXXXXX")
 trap 'rm -f "$tmp"' EXIT HUP INT TERM
 
-url=${server%/}/api/wallpaper.php?format=image\&mode=$mode
+url="${server%/}/api/wallpaper.php?format=image&mode=$mode"
 curl --fail --location --silent --show-error --connect-timeout 15 \
     --max-time 60 --max-filesize 20971520 --output "$tmp" "$url"
 

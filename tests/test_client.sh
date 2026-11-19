@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 mkdir -p "$tmp/mockbin" "$tmp/home"
@@ -71,7 +71,7 @@ if "$client" --server https://wallpapers.example.com --output "$output" >/dev/nu
 fi
 cmp "$tmp/good" "$output"
 
-if FRESHSPLASH_SERVER= "$client" --output "$output" >/dev/null 2>&1; then
+if FRESHSPLASH_SERVER='' "$client" --output "$output" >/dev/null 2>&1; then
     printf 'Missing server URL unexpectedly accepted\n' >&2
     exit 1
 fi
