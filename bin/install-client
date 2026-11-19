@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+bin_dir=$HOME/.local/bin
+unit_dir=$HOME/.config/systemd/user
+config_dir=$HOME/.config/freshsplash
+
+mkdir -p "$bin_dir" "$unit_dir" "$config_dir"
+install -m 0755 "$root/bin/freshsplash" "$bin_dir/freshsplash"
+install -m 0644 "$root/systemd/freshsplash.service" "$unit_dir/freshsplash.service"
+install -m 0644 "$root/systemd/freshsplash.timer" "$unit_dir/freshsplash.timer"
+if [ ! -e "$config_dir/client.env" ]; then
+    install -m 0600 "$root/config/client.env.example" "$config_dir/client.env"
+fi
+
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl --user daemon-reload || :
+fi
+printf 'Installed FreshSplash client. Set FRESHSPLASH_SERVER in %s/client.env\n' "$config_dir"
+printf 'Then enable: systemctl --user enable --now freshsplash.timer\n'

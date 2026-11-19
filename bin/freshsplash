@@ -1,0 +1,117 @@
+#!/bin/sh
+set -eu
+
+server=${FRESHSPLASH_SERVER:-}
+output=${FRESHSPLASH_OUTPUT:-"$HOME/.local/share/backgrounds/freshsplash.jpg"}
+mode=${FRESHSPLASH_MODE:-random}
+setter=${FRESHSPLASH_SET:-none}
+
+usage() {
+    printf '%s\n' 'Usage: freshsplash --server URL [--output FILE] [--mode random|latest|oldest] [--set none|auto|feh|xfce|gnome|cinnamon|mate]'
+}
+
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --server|--output|--mode|--set)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            case $1 in
+                --server) server=$2 ;;
+                --output) output=$2 ;;
+                --mode) mode=$2 ;;
+                --set) setter=$2 ;;
+            esac
+            shift 2 ;;
+        --help|-h) usage; exit 0 ;;
+        *) usage >&2; exit 2 ;;
+    esac
+done
+
+case $server in https://*|http://*) ;; *)
+    printf 'FreshSplash server URL is required (use --server or FRESHSPLASH_SERVER).\n' >&2
+    exit 2 ;;
+esac
+case $mode in random|latest|oldest) ;; *) printf 'Invalid mode: %s\n' "$mode" >&2; exit 2 ;; esac
+case $setter in none|auto|feh|xfce|gnome|cinnamon|mate) ;; *)
+    printf 'Unsupported wallpaper setter: %s\n' "$setter" >&2; exit 2 ;;
+esac
+command -v curl >/dev/null 2>&1 || { printf 'curl is required\n' >&2; exit 1; }
+
+case $output in
+    /*) ;;
+    *) output=$PWD/$output ;;
+esac
+dir=$(dirname "$output")
+mkdir -p "$dir"
+tmp=$(mktemp "$dir/.freshsplash.XXXXXXXX")
+trap 'rm -f "$tmp"' EXIT HUP INT TERM
+
+url=${server%/}/api/wallpaper.php?format=image\&mode=$mode
+curl --fail --location --silent --show-error --connect-timeout 15 \
+    --max-time 60 --max-filesize 20971520 --output "$tmp" "$url"
+
+bytes=$(wc -c < "$tmp")
+if [ "$bytes" -lt 12 ] || [ "$bytes" -gt 20971520 ]; then
+    printf 'FreshSplash image is empty or too large: %s bytes\n' "$bytes" >&2
+    exit 1
+fi
+
+# Check signatures even when the optional file(1) utility is unavailable.
+signature=$(od -An -tx1 -N12 "$tmp" | tr -d ' \n')
+case $signature in
+    ffd8ff*|89504e470d0a1a0a*|52494646????????57454250*) ;;
+    *) printf 'FreshSplash returned an unsupported image format\n' >&2; exit 1 ;;
+esac
+if command -v file >/dev/null 2>&1; then
+    mime=$(file -b --mime-type "$tmp")
+    case $mime in image/jpeg|image/png|image/webp) ;;
+        *) printf 'FreshSplash returned invalid MIME type: %s\n' "$mime" >&2; exit 1 ;;
+    esac
+fi
+
+chmod 0644 "$tmp"
+mv -f "$tmp" "$output"
+trap - EXIT HUP INT TERM
+printf 'FreshSplash image updated: %s\n' "$output"
+
+if [ "$setter" = auto ]; then
+    if [ "${XDG_SESSION_TYPE:-}" != wayland ] && command -v i3-msg >/dev/null 2>&1 && i3-msg -t get_version >/dev/null 2>&1; then
+        setter=feh
+    else
+        case ${XDG_CURRENT_DESKTOP:-} in
+            *XFCE*|*Xfce*) setter=xfce ;;
+            *GNOME*) setter=gnome ;;
+            *Cinnamon*|*CINNAMON*) setter=cinnamon ;;
+            *MATE*) setter=mate ;;
+            *) setter=none ;;
+        esac
+    fi
+fi
+
+case $setter in
+    none) ;;
+    feh)
+        [ "${XDG_SESSION_TYPE:-}" != wayland ] || { printf 'feh only supports X11\n' >&2; exit 1; }
+        command -v feh >/dev/null 2>&1 || { printf 'feh not installed\n' >&2; exit 1; }
+        feh --no-fehbg --bg-fill "$output" ;;
+    xfce)
+        command -v xfconf-query >/dev/null 2>&1 || { printf 'xfconf-query not installed\n' >&2; exit 1; }
+        properties=$(xfconf-query -c xfce4-desktop -lv | awk '$1 ~ /^\/backdrop\/.*\/last-image$/ {print $1}')
+        [ -n "$properties" ] || { printf 'No Xfce backdrop properties found; saved image only\n' >&2; exit 0; }
+        printf '%s\n' "$properties" | while IFS= read -r property; do
+            xfconf-query -c xfce4-desktop -p "$property" -s "$output"
+        done ;;
+    gnome|cinnamon)
+        command -v gsettings >/dev/null 2>&1 || { printf 'gsettings not installed\n' >&2; exit 1; }
+        case $setter in gnome) schema=org.gnome.desktop.background ;; cinnamon) schema=org.cinnamon.desktop.background ;; esac
+        uri=file://$output
+        if command -v python3 >/dev/null 2>&1; then
+            uri=$(python3 -c 'import pathlib,sys; print(pathlib.Path(sys.argv[1]).as_uri())' "$output")
+        fi
+        gsettings set "$schema" picture-uri "$uri"
+        if [ "$setter" = gnome ]; then
+            gsettings set "$schema" picture-uri-dark "$uri" || :
+        fi ;;
+    mate)
+        command -v gsettings >/dev/null 2>&1 || { printf 'gsettings not installed\n' >&2; exit 1; }
+        gsettings set org.mate.background picture-filename "$output" ;;
+esac
