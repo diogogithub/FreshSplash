@@ -1,0 +1,7 @@
+/.env
+/config/local.php
+/var/*
+!/var/.gitkeep
+/public/uploads/*
+!/public/uploads/.gitkeep
+/.phpunit.cache/

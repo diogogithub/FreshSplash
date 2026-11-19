@@ -16,7 +16,7 @@ This refresh replaces the original proof of concept with a deployable PHP applic
 - random, latest, and oldest wallpaper modes;
 - direct-image API, JSON metadata API, upload API, feed, and health endpoint;
 - an atomic POSIX-shell desktop client;
-- optional GNOME, Cinnamon, MATE, XFCE, and KDE Plasma wallpaper setters;
+- optional i3/X11, GNOME, Cinnamon, MATE and Xfce wallpaper setters;
 - a systemd user timer;
 - Docker Compose deployment and shared-hosting instructions.
 
@@ -91,7 +91,7 @@ The simplest use keeps the desktop configured to read one stable file:
   --output "$HOME/.local/share/backgrounds/freshsplash.jpg"
 ```
 
-FreshSplash downloads to a temporary file, rejects HTTP errors and empty responses, validates the MIME type when `file` is installed, and then atomically replaces the destination.
+FreshSplash downloads to a temporary file in the destination directory, rejects HTTP errors, empty or oversized responses, and non-image signatures (JPEG, PNG or WebP). If `file` is installed, it also checks the MIME type. Failed downloads **never overwrite the last valid wallpaper**. For direct i3 updates use `--set feh` (requires `feh`); `--set auto` supports i3/X11, Xfce, GNOME, Cinnamon and MATE. KDE Plasma is not managed automatically; configure it to use the saved wallpaper file.
 
 To also update the running desktop:
 
@@ -107,7 +107,7 @@ $EDITOR "$HOME/.config/freshsplash/client.env"
 systemctl --user enable --now freshsplash.timer
 ```
 
-The timer refreshes after login and then roughly every six hours. Edit `systemd/freshsplash.timer` before installation to use another cadence.
+The installer copies the client to `~/.local/bin` and units to `~/.config/systemd/user`. It creates `client.env` only if missing, without enabling the timer. Set `FRESHSPLASH_SERVER` to your own instance's URL before enabling it; `FRESHSPLASH_SET=none` saves the file without changing the desktop, while `auto` updates supported desktop sessions. The timer refreshes after user-manager startup and then roughly every six hours. `curl` is required, and `file` is optional. No upload or moderation token is needed for downloads.
 
 ## API
 
@@ -164,7 +164,8 @@ The application intentionally has no accounts, comments, likes, notifications, t
 
 ```sh
 find . -name '*.php' -print0 | xargs -0 -n1 php -l
-sh -n bin/freshsplash bin/install-client docker/entrypoint.sh
+sh -n bin/freshsplash bin/install-client tests/test_client.sh docker/entrypoint.sh
+sh tests/test_client.sh
 php tests/run.php
 ```
 

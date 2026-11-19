@@ -1,0 +1,29 @@
+name: test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  client-and-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq php-cli php-sqlite3 php-gd shellcheck >/dev/null
+      - name: Validate POSIX shell
+        run: |
+          sh -n bin/freshsplash bin/install-client tests/test_client.sh docker/entrypoint.sh
+          shellcheck -s sh bin/freshsplash bin/install-client tests/test_client.sh
+      - name: Test desktop client offline
+        run: sh tests/test_client.sh
+      - name: Lint PHP
+        run: find src config public -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Test PHP server
+        run: php tests/run.php
